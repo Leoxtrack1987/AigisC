@@ -84,7 +84,7 @@ La interfaz de la aplicación se divide en cuatro partes principales para facili
 
 ## 📋 Documentación de la Gramática Léxica (AigisC)
 
-Esta tabla documenta los tipos de tokens, las palabras reservadas o patrones, su función, y un ejemplo de código válido.
+Esta tabla documenta los tipos de tokens, las palabras reservadas o patrones, su función, y un ejemplo de código válido, sino son correctos en el programa, se marcará un error con un token no identificado.
 
 | Tipo de Token | Palabras Reservadas / Patrón | Función | Ejemplo Válido |
 | :--- | :--- | :--- | :--- |
@@ -99,4 +99,5 @@ Esta tabla documenta los tipos de tokens, las palabras reservadas o patrones, su
 | **Delimitador** | `{`, `}`, `(`, `)`, `[`, `]`, `,`, `;`, `.` | Símbolos de puntuación para estructurar el código. | `{}`, `(x)`, `[0]`, `func(x,y);` |
 | **Comentario** | `//`, `///.*?///` | Líneas o bloques de texto que deben ser ignorados. | `// línea`, `/// bloque ///` |
 | **Error** | N/A | Captura cualquier secuencia de caracteres no válida o mal formada. | N/A |
+
 ***
