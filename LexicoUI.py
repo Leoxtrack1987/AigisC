@@ -1,5 +1,6 @@
+from Lexico.Lexico import Lexico
+from Sintactico.Sintactico import Sintactico
 from tkinter import scrolledtext
-from Lexico import Lexico
 import tkinter as tk
 
 class LexicalAnalyzerGUI:
@@ -16,17 +17,32 @@ class LexicalAnalyzerGUI:
         top_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         left_frame = tk.Frame(top_frame)
-        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        left_frame.columnconfigure(0, weight=7)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        left_frame.columnconfigure(0, weight=1)
         
         tk.Label(left_frame, text="Editor de Código:").pack()
-        self.code_editor = scrolledtext.ScrolledText(left_frame, height=15)
-        self.code_editor.pack(fill=tk.BOTH, expand=True)
+        
+        # Frame para números de línea y editor
+        editor_frame = tk.Frame(left_frame)
+        editor_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Números de línea
+        self.line_numbers = tk.Text(editor_frame, width=4, padx=3, takefocus=0, 
+                                     border=0, background='#f0f0f0', state='disabled', wrap='none')
+        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
+        
+        # Editor de código
+        self.code_editor = scrolledtext.ScrolledText(editor_frame, height=15, width=40)
+        self.code_editor.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-       
+        self.code_editor.config(yscrollcommand=self.on_scroll)
+        
+        # Inicializar números de línea
+        self.update_line_numbers()
+
         right_frame = tk.Frame(top_frame)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        right_frame.columnconfigure(0, weight=3)
+        right_frame.columnconfigure(0, weight=8)
         
         tk.Label(right_frame, text="Tabla de Símbolos:").pack()
         self.symbol_display = scrolledtext.ScrolledText(right_frame, height=15)
@@ -42,31 +58,67 @@ class LexicalAnalyzerGUI:
         self.error_display = scrolledtext.ScrolledText(root, height=7, fg="red")
         self.error_display.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-    def compile_code(self):
-        code = self.code_editor.get("1.0", tk.END)
+    def on_scroll(self, *args):
+        """Sincroniza el scroll de números de línea con el editor"""
+        self.line_numbers.yview_moveto(args[0])
         
+    def update_line_numbers(self, event=None):
+        """Actualiza los números de línea"""
+        line_count = self.code_editor.get('1.0', 'end-1c').count('\n') + 1
+        line_numbers_text = "\n".join(str(i) for i in range(1, line_count + 1))
+        
+        self.line_numbers.config(state='normal')
+        self.line_numbers.delete('1.0', 'end')
+        self.line_numbers.insert('1.0', line_numbers_text)
+        self.line_numbers.config(state='disabled')
+
+    def compile_code(self):
+    
+        self.error_display.delete("1.0", tk.END)
+        self.symbol_display.delete("1.0", tk.END)
+
+        code = self.code_editor.get("1.0", tk.END)
+
         # Tokenizar usando la clase Lexico
         tokens = self.lexico.tokenize(code)
-        
-        # Separar errores
-        errors = []
-        symbol_table = []
-        
-        for token in tokens:
-            if not token.valido:
-                errors.append(f"Error léxico: '{token.valor}' en línea {token.linea}, columna {token.columna}")
-            symbol_table.append((token.linea, token.valor, token.tipo))
 
-        # Mostrar errores
-        self.error_display.delete("1.0", tk.END)
-        if errors:
-            self.error_display.insert(tk.END, "\n".join(errors))
+       
+        parser = Sintactico(tokens)
+        ast = parser.analisis_sintactico()
+
+        if parser.errores:
+            for err in parser.errores:
+                self.error_display.insert(tk.END, err + "\n")
         else:
-            self.error_display.insert(tk.END, "No se encontraron errores léxicos.")
+            self.error_display.insert(tk.END, "✅ Análisis sintáctico completado con éxito.\n")
 
         # Mostrar tabla de símbolos
-        self.symbol_display.delete("1.0", tk.END)
-        self.symbol_display.insert(tk.END, f"{'No Línea':<10}{'Token':<20}{'Descripción'}\n")
-        self.symbol_display.insert(tk.END, "-"*50 + "\n")
-        for line, token, desc in symbol_table:
-            self.symbol_display.insert(tk.END, f"{line:<10}{token:<20}{desc}\n")
+        self.symbol_display.insert(
+            tk.END,
+            f"{'Identificador':<15}{'Categoría':<15}{'Tipo Dato':<12}{'Ámbito':<10}{'Línea':<8}{'Estado':<12}\n"
+        )
+        self.symbol_display.insert(tk.END, "-" * 80 + "\n")
+
+        for simbolo in parser.tabla.simbolos:
+            ident = simbolo.get("identificador") or "-"
+            cat = simbolo.get("categoria") or "-"
+            tipo = simbolo.get("tipo_dato") or "-"
+            ambito = simbolo.get("ambito") or "-"
+            linea = simbolo.get("linea") or "-"
+            estado = simbolo.get("estado") or "-"
+
+            self.symbol_display.insert(
+                tk.END,
+                f"{ident:<15}{cat:<15}{tipo:<12}{ambito:<10}{linea:<8}{estado:<12}\n"
+            )
+
+
+
+        self.symbol_display.insert(tk.END, "\n\nÁrbol Sintáctico (Resumen):\n")
+        self.symbol_display.insert(tk.END, str(ast))
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = LexicalAnalyzerGUI(root)
+    root.mainloop()

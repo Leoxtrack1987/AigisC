@@ -1,30 +1,21 @@
 import re
 from typing import List
-
-
-class Token:
-    def __init__(self, tipo: str, valor: str, linea: int, columna: int):
-        self.tipo = tipo
-        self.valor = valor
-        self.linea = linea
-        self.columna = columna
-        self.valido = tipo not in ("NumeroInvalido", "TokenNoReconocido")
-
-    def print_token(self):
-        return f"N.Linea: {self.linea} Col: {self.columna} Token: {self.tipo} Valor: {self.valor} Descripcion: {'VALIDO' if self.valido else 'NO VALIDO'}"
+from Objetos.Token import Token
 
 class Lexico:
     def __init__(self):
         #Regex de nuestras reglas
+
         self.token_regex = [
             ("ComentarioMultilinea", r"///.*?///"),
             ("ComentarioUnilinea", r"//[^\n]*"),
-            ("Reservada", r"\b(if|else|for|while|return|const|readonly|global|local|shared|try|catch|throw|model|template|extends|override|import|from|in|is|not|and|or|void|int|float|char|bool|string|mapInt|mapString|function)\b"),
+            ("Reservada", r"\b(if|else|for|while|return|const|readonly|global|local|shared|try|catch|throw|model|template|extends|override|import|from|in|is not|is|not|and|or|AND|OR|NOT|void|int|float|char|bool|string|mapInt|mapString|function|true|false)\b"),
             ("NumeroInvalido", r"[+-]?(?:\d+\.)+\d*\.?\d*|\.[+-]?\d+\.+\d*"),
             ("Numero", r"[+-]?(?:\d+\.\d+|\d+\.|\.\d+|\d+)\b"),
             ("Cadena", r'"([^"\\]|\\.)*"'),
+            ("AsignacionCompuesta", r"(\+=|-=|\*=|/=)"),
             ("Relacional", r"(==|!=|<=|>=|<|>)"),
-            ("Incremental", r"(\+\+|--|//|\*\*)"),
+            ("Incrementador", r"(\+\+|--|//|\*\*)"),  
             ("Asignacion", r"="),
             ("Aritmetico", r"[+\-*/%]"),
             ("Logico", r"(&&|\|\||!)"),
@@ -34,13 +25,14 @@ class Lexico:
             ("ParentDer", r"\)"),
             ("CorcheteIzq", r"\["),
             ("CorcheteDer", r"\]"),
+            ("DosPuntos", r":"),  
             ("Coma", r","),
             ("PuntoComa", r";"),
             ("Punto", r"\."),
             ("Identificador", r"[a-zA-Z_][a-zA-Z0-9_]*"),
             ("Espacio", r"[ \t]+"),
             ("SaltoLinea", r"\n"),
-            ("TokenNoReconocido", r"[^\s]+"),  
+            ("TokenNoReconocido", r"[^\s]+"),
         ]
 
         self.regex_completa = re.compile(
@@ -48,7 +40,7 @@ class Lexico:
             re.DOTALL
         )
 
-    def tokenize(self, code: str) -> List[Token]:
+    def tokenize(self, code: str) -> List[Token]: 
         tokens = []
         linea = 1
         pos_inicio = 0
