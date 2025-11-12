@@ -9,7 +9,7 @@ class LexicalAnalyzerGUI:
         self.root.title("Analizador Léxico")
         self.root.geometry("1200x600")
         
-        # Instancia del analizador léxico
+        #Instancia del analizador léxico
         self.lexico = Lexico()
 
         # Frame superior para editor y tabla en columnas
